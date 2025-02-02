@@ -39,10 +39,17 @@ public class JwtAuthenticationFilter implements GatewayFilter {
         if(!exchange.getRequest().getPath().toString().startsWith("/api/auth")){
             if (token != null && token.startsWith("Bearer ")) {
                 token = token.substring(7);
-                Date string = jwtUtil.parseClaims(token).getExpiration();
                 try {
                     if (!jwtUtil.isTokenExpired(token)) {
                         Claims claims = jwtUtil.parseClaims(token);
+
+                        String role = claims.get("role", String.class);
+                        String route = exchange.getRequest().getPath().toString();
+                        System.out.println(role);
+
+                        if(route.startsWith("/api/admin") && !role.equals("ADMIN")){
+                            return onError(exchange, "Only admins permitted", HttpStatus.FORBIDDEN);
+                        }
 //                        exchange.getRequest().mutate().header("username", claims.getSubject()).build();
                     } else {
                         return onError(exchange, "Invalid JWT Token", HttpStatus.UNAUTHORIZED);
